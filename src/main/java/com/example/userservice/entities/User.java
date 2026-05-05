@@ -1,33 +1,30 @@
 package com.example.userservice.entities;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "users",
-        uniqueConstraints = {
-                // Garante que o mesmo user não se repita no mesmo cliente
-                @UniqueConstraint(columnNames = {"login", "client_id"})
-        }
-)
+@Table(name = "users")
 @Getter
 @Setter
-public class User {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
-
-    @Column(nullable = false)
+    @Column(unique = true, nullable = false)
     private String login;
 
     @Column(nullable = false)
@@ -36,6 +33,49 @@ public class User {
     @Column(nullable = false)
     private String role;
 
-    @Column(updatable = false)
-    private Instant createdAt = Instant.now();
+    @Column(nullable = false)
+    private String clientId;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return login;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
