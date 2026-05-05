@@ -1,38 +1,40 @@
 package com.example.userservice.services;
 
-import com.example.userservice.dtos.ClientRequestDTO;
-import com.example.userservice.dtos.ClientResponseDTO;
+import com.example.userservice.dtos.Dtos;
 import com.example.userservice.entities.Client;
 import com.example.userservice.repositories.ClientRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public ClientResponseDTO createClient(ClientRequestDTO request) {
-        Client client = new Client();
-        client.setName(request.name());
-        client.setTokenExpirationMillis(request.tokenExpirationMillis());
+    @Transactional
+    public Dtos.ClientRegistrationResponse registerClient(Dtos.ClientRegistrationRequest request) {
+        String clientId = request.getClientName().toLowerCase().replaceAll("\\s+", "-") + "-" + UUID.randomUUID().toString().substring(0, 8);
+        String rawSecret = UUID.randomUUID().toString();
+        
+        Client client = Client.builder()
+                .clientId(clientId)
+                .clientSecret(passwordEncoder.encode(rawSecret))
+                .redirectUris(request.getRedirectUris())
+                .scopes(request.getScopes())
+                .grantTypes(request.getGrantTypes())
+                .build();
 
-        // Salva no banco de dados e gera o UUID
-        Client savedClient = clientRepository.save(client);
+        clientRepository.save(client);
 
-        return new ClientResponseDTO(
-                savedClient.getId(),
-                savedClient.getName(),
-                savedClient.getTokenExpirationMillis()
-        );
-    }
-
-    public List<ClientResponseDTO> listAll() {
-        return clientRepository.findAll().stream()
-                .map(c -> new ClientResponseDTO(c.getId(), c.getName(), c.getTokenExpirationMillis()))
-                .toList();
+        Dtos.ClientRegistrationResponse response = new Dtos.ClientRegistrationResponse();
+        response.setClientId(clientId);
+        response.setClientSecret(rawSecret);
+        return response;
     }
 }
