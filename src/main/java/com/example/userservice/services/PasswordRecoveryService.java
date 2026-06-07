@@ -23,7 +23,7 @@ public class PasswordRecoveryService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public void forgotPassword(Dtos.ForgotPasswordRequest request) {
+    public String forgotPassword(Dtos.ForgotPasswordRequest request) {
         User user = userRepository.findByLoginAndClientId(request.getLogin(), request.getClientId())
                 .orElseThrow(() -> new InvalidCredentialsException("Usuário não encontrado"));
 
@@ -39,6 +39,9 @@ public class PasswordRecoveryService {
                 .build();
 
         tokenRepository.save(resetToken);
+
+        // Retorna o token gerado para o Controller
+        return token;
     }
 
     @Transactional

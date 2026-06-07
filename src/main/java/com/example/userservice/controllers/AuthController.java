@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -81,9 +82,9 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(@RequestBody Dtos.ForgotPasswordRequest request) {
-        passwordRecoveryService.forgotPassword(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Dtos.ForgotPasswordRequest request) {
+        String token = passwordRecoveryService.forgotPassword(request);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 
     @PostMapping("/reset-password")
