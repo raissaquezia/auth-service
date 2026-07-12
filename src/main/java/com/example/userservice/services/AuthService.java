@@ -34,6 +34,10 @@ public class AuthService {
             throw new InvalidCredentialsException("Senha inválida");
         }
 
+        if (loginRequest.getRole() == null || !loginRequest.getRole().equals(user.getRole())) {
+            throw new InvalidCredentialsException("Role inválida");
+        }
+
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 

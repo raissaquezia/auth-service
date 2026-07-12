@@ -77,6 +77,7 @@ public class Dtos {
         private String login;
         private String password;
         private String clientId;
+        private String role;
         private String device;
     }
 
